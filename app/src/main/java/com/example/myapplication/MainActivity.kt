@@ -1,20 +1,28 @@
 package com.example.myapplication
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.InputFilter
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import database
+import kotlin.time.DurationUnit
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        var list = mutableListOf(itemData("Test"))
-        val listAdapter = recycleViewAdapter(list)
+        val dbHelper = database(this)
+
+        var list = dbHelper.getAllData()
+        val listAdapter = recycleViewAdapter(list,dbHelper)
 
         val recycleAdapter: RecyclerView = findViewById(R.id.recyclerView)
         val addTask: Button = findViewById(R.id.addButton)
@@ -25,9 +33,19 @@ class MainActivity : AppCompatActivity() {
         recycleAdapter.adapter = listAdapter
         recycleAdapter.layoutManager=LinearLayoutManager(this)
         addTask.setOnClickListener{
-
-            list = listAdapter.getList() as MutableList<itemData>
-            listAdapter.addItem(enteredTask.text.toString())
+            val taskEntered:String = enteredTask.text.toString()
+             list = dbHelper.getAllData()
+            if(list.contains(itemData(taskEntered))) {
+                Toast.makeText(this,"Task Already Exists", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if(taskEntered.equals(""))
+            {
+                Toast.makeText(this,"Please Enter A Task Before Adding", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            listAdapter.addItem(taskEntered,this)
+            dbHelper.insertData(taskEntered);
 
         }
     }
